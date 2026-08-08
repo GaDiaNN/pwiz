@@ -77,7 +77,7 @@ generate-version.cpp $(TAGRECON_PATH)/$(version-file) : freicore $(application-n
 # revision-info is a sequence: <max revision> <max year> <max month> <max day> <number of modified files in working copy>
 
 
-using expat : 2.0.1 : $(EXPAT_SOURCE) ;
+using expat : 2.8.2 : $(EXPAT_SOURCE) ;
 
 install data-files
     : # sources

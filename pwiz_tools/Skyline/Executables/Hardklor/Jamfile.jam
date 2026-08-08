@@ -40,11 +40,11 @@ exe Hardklor
     $(PWIZ_ROOT_PATH)/libraries/zlib-1.3.1/trees.c
     $(PWIZ_ROOT_PATH)/libraries/zlib-1.3.1/uncompr.c
     $(PWIZ_ROOT_PATH)/libraries/zlib-1.3.1/zutil.c
-    $(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib/xmlparse.c
-    $(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib/xmlrole.c
-    $(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib/xmltok.c
-    $(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib/xmltok_impl.c
-    $(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib/xmltok_ns.c
+    $(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib/xmlparse.c
+    $(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib/xmlrole.c
+    $(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib/xmltok.c
+    $(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib/xmltok_impl.c
+    $(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib/xmltok_ns.c
     MSToolKit/src/MSToolkit/MSObject.cpp
     MSToolKit/src/MSToolkit/MSReader.cpp
     MSToolKit/src/MSToolkit/mzMLWriter.cpp
@@ -84,7 +84,7 @@ exe Hardklor
     Hardklor/SpecAnalyzeSupport.cpp  
     : # requirements
     <include>MSToolKit/include
-    <include>$(PWIZ_ROOT_PATH)/libraries/expat-2.0.1/lib
+    <include>$(PWIZ_ROOT_PATH)/libraries/expat-2.8.2/lib
     <include>$(PWIZ_ROOT_PATH)/libraries/zlib-1.3.1
     <define>XML_STATIC
     <define>_PROTEOWIZARD

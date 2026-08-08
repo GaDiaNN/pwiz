@@ -34,6 +34,7 @@ rule config_h ( targets * : sources * : properties * )
             HAVE_MEMMOVE HAVE_MEMORY_H HAVE_MMAP HAVE_STDINT_H HAVE_STDLIB_H
             HAVE_STRINGS_H HAVE_STRING_H HAVE_SYS_STAT_H HAVE_SYS_TYPES_H
             HAVE_UNISTD_H STDC_HEADERS XML_DTD XML_NS
+            HAVE_SYSCALL_GETRANDOM
             ;
         undef +=
             WORDS_BIGENDIAN const off_t size_t
@@ -72,6 +73,7 @@ actions config_h
 #define PACKAGE_TARNAME "expat"
 #define PACKAGE_VERSION "$(VERSION)"
 #define XML_CONTEXT_BYTES 1024
+#define XML_GE 1
 #define BYTEORDER $(BYTEORDER)
 $(CONFIG:J=$(NL))
 
@@ -105,6 +107,11 @@ rule init ( version ? : location : options * )
             <expat-version>$(version)
             <expat-location>$(location)
             <include>$(location)/lib
+            # expat >=2.6 split the hash-salt entropy source into per-platform .c files;
+            # add the right one (rand_s on Windows, getrandom on Linux). These are NOT
+            # self-guarding, so they must be selected by target-os, not globbed.
+            <target-os>windows:<source>$(location)/lib/random_rand_s.c
+            <target-os>linux:<source>$(location)/lib/random_getrandom.c
             <location-prefix>expat
             <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
             <toolset>msvc:<define>_SCL_SECURE_NO_DEPRECATE
