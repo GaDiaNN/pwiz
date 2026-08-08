@@ -75,9 +75,9 @@ rule init ( version ? : location : options * )
             wbmp.c ;
 
         local png-src-location = [ feature.get-values <png-src-location> : $(options) ] ;
-        png-src-location ?= $(location)/../libpng-1.5.6 ;
+        png-src-location ?= $(location)/../libpng-1.6.58 ;
         path-constant PNG_SOURCE : $(png-src-location[1]) ;
-        using ext-png : 1.5.6 : $(PNG_SOURCE) ;
+        using ext-png : 1.6.58 : $(PNG_SOURCE) ;
 
         local freetype-src-location = [ feature.get-values <freetype-src-location> : $(options) ] ;
         freetype-src-location ?= $(location)/../freetype-2.13.3 ;
