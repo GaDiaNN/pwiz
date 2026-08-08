@@ -10,7 +10,7 @@ if (ls libraries/msparser_*_linux64 > /dev/null 2>&1); then rm -fr libraries/msp
 if [ -d libraries/boost-build/src/engine/bin ]; then rm -fr libraries/boost-build/src/engine/bin; fi;
 if [ -d libraries/boost-build/src/engine/bootstrap ]; then rm -fr libraries/boost-build/src/engine/bootstrap; fi;
 if [ -d libraries/gd-2.0.33 ]; then rm -fr libraries/gd-2.0.33; fi;
-if [ -d libraries/zlib-1.2.3 ]; then rm -fr libraries/zlib-1.2.3; fi;
+if [ -d libraries/zlib-1.3.1 ]; then rm -fr libraries/zlib-1.3.1; fi;
 if [ -d libraries/libgd-2.1.0alpha ]; then rm -fr libraries/libgd-2.1.0alpha; fi;
 if [ -d libraries/libpng-1.5.6 ]; then rm -fr libraries/libpng-1.5.6; fi;
 if [ -d libraries/freetype-VER-2-13-3 ]; then rm -fr libraries/freetype-VER-2-13-3; fi;
