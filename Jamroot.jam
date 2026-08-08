@@ -591,7 +591,7 @@ using tar ;
 
 if ! [ without-mz5 ]
 {
-    tar.extract $(PWIZ_LIBRARIES_PATH)/hdf5-1.8.7.tar.bz2 : *.c* *.h* *.jam *.settings : <location>$(PWIZ_LIBRARIES_PATH) ;
+    tar.extract $(PWIZ_LIBRARIES_PATH)/hdf5-1.14.6.tar.bz2 : *.c* *.h* : <location>$(PWIZ_LIBRARIES_PATH) ;
 }
 
 path-constant BOOST_SOURCE : $(boost_src) ;
@@ -1697,7 +1697,10 @@ bcp.copy-boost-dependencies copy_boost_subset
     [ path.glob-tree $(PWIZ_LIBRARIES_PATH)/boost_aux : *.cpp *.hpp ]
     [ path.glob-tree $(PWIZ_LIBRARIES_PATH)/SQLite : *.cpp *.h ]
 
-    [ mz5-build $(PWIZ_LIBRARIES_PATH)/hdf5-1.8.7/src/init_once_workaround.cpp ]
+    # (HDF5 1.14 is built threadsafe, but its rewritten H5TS does its own InitOnce
+    #  process init in a static lib, so the old init_once_workaround.cpp -- the only
+    #  boost dependency the bundled HDF5 pulled in -- is gone from the 1.14 source and
+    #  is no longer scanned here.)
 
     # scan all targets and their dependencies
     $(PWIZ_ROOT_PATH)/pwiz_tools/commandline//mstools

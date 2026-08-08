@@ -31,14 +31,21 @@
 #include "pwiz/utility/misc/Filesystem.hpp"
 #include "boost/thread/thread.hpp"
 #include "boost/thread/barrier.hpp"
+#include "mz5/Connection_mz5.hpp"
 #include <cstring>
 #include <cstdlib>
+#include <atomic>
 
 using namespace pwiz::util;
 using namespace pwiz::cv;
 using namespace pwiz::msdata;
 
 ostream* os_ = 0;
+
+// Counts worker-thread failures. Previously a std::exception in a worker was
+// printed and SWALLOWED, so the thread-safety test could not actually fail; the
+// counter (asserted zero by the caller) closes that hole.
+std::atomic<int> workerFailureCount_(0);
 
 void testWriteRead(const MSData& msd, const MSDataFile::WriteConfig& config)
 {
@@ -250,24 +257,101 @@ void testThreadSafetyWorker(boost::barrier* testBarrier)
     try
     {
         testWriteRead();
-    } catch (exception& e)
+    }
+    catch (const H5::Exception& e)
+    {
+        // H5::Exception does not derive from std::exception, so it needs its own catch.
+        cerr << "HDF5 exception in worker thread: " << e.getDetailMsg() << endl;
+        ++workerFailureCount_;
+    }
+    catch (const exception& e)
     {
         cerr << "Exception in worker thread: " << e.what() << endl;
-    } catch (...)
-    {
-        cerr << "Unhandled exception in worker thread." << endl;
-        exit(1); // fear the unknown!
+        ++workerFailureCount_;
     }
+    // No catch(...) here -- deliberately narrower than the original test, which caught
+    // (...) and exit(1)'d. We count genuine C++ exceptions above (a non-thread-safe HDF5
+    // surfaces H5::Exception / std::exception, which is the case this test must detect).
+    // Anything else is not a recoverable error but a sign the process is already corrupt
+    // -- most importantly a Win32 SEH access violation, which /asynch-exceptions=on would
+    // otherwise let catch(...) swallow. Such a fault must fail fast at its origin: let it
+    // crash (a non-zero exit still fails the test) with the faulting stack intact for
+    // whoever built the test to inspect, rather than be laundered into a late, generic
+    // assert while sibling threads keep running in an undefined state.
 }
 
 void testThreadSafety(const int& testThreadCount)
 {
+    workerFailureCount_ = 0;
     boost::barrier testBarrier(testThreadCount);
     boost::thread_group testThreadGroup;
     for (int i = 0; i < testThreadCount; ++i)
         testThreadGroup.add_thread(new boost::thread(&testThreadSafetyWorker,
                 &testBarrier));
     testThreadGroup.join_all();
+    // Each worker writes+reads its OWN file; the barrier makes their first HDF5
+    // calls race, exercising the one-time library init. A non-thread-safe HDF5
+    // fails here (previously the failure was swallowed).
+    unit_assert(workerFailureCount_.load() == 0);
+}
+
+// A distinct init-race case: one writer, then many readers of the SAME file
+// released together at a barrier. This stresses the read path's shared HDF5
+// global state and the one-time library init, and checks each reader gets the
+// correct data back.
+void testConcurrentReadWorker(const string* filename, const MSData* expected,
+        boost::barrier* testBarrier)
+{
+    testBarrier->wait(); // release all readers simultaneously
+
+    try
+    {
+        MSData msd2;
+        Serializer_mz5 mz5Serializer((MSDataFile::WriteConfig()));
+        mz5Serializer.read(*filename, msd2);
+        References::resolve(msd2);
+        Diff<MSData, DiffConfig> diff(*expected, msd2);
+        unit_assert(!diff);
+    }
+    catch (const H5::Exception& e)
+    {
+        cerr << "HDF5 exception in reader thread: " << e.getDetailMsg() << endl;
+        ++workerFailureCount_;
+    }
+    catch (const exception& e)
+    {
+        cerr << "Exception in reader thread: " << e.what() << endl;
+        ++workerFailureCount_;
+    }
+    // No catch(...) -- see testThreadSafetyWorker: a non-C++ fault (e.g. a SEH access
+    // violation) should crash fast, not be caught and continued in a corrupt process.
+}
+
+void testConcurrentReadInitRace(const int& testThreadCount)
+{
+    MSData msd;
+    examples::initializeTiny(msd);
+    MSDataFile::WriteConfig writeConfig;
+    writeConfig.binaryDataEncoderConfig.compression = BinaryDataEncoder::Compression_Zlib;
+
+    string filename = "Serializer_mz5_Test_shared_"
+            + lexical_cast<string>(testThreadCount) + ".mz5";
+    {
+        Serializer_mz5 mz5Serializer(writeConfig);
+        IterationListenerRegistry ilr;
+        mz5Serializer.write(filename, msd, &ilr);
+    }
+
+    workerFailureCount_ = 0;
+    boost::barrier testBarrier(testThreadCount);
+    boost::thread_group testThreadGroup;
+    for (int i = 0; i < testThreadCount; ++i)
+        testThreadGroup.add_thread(new boost::thread(&testConcurrentReadWorker,
+                &filename, &msd, &testBarrier));
+    testThreadGroup.join_all();
+    unit_assert(workerFailureCount_.load() == 0);
+
+    bfs::remove(filename);
 }
 
 int main(int argc, char* argv[])
@@ -279,6 +363,11 @@ int main(int argc, char* argv[])
         if (argc > 1 && !strcmp(argv[1], "-v"))
             os_ = &cout;
 
+        // Invariant: mz5 drives HDF5 from worker threads, so the linked HDF5 MUST
+        // be thread-safe. Assert it directly (H5_HAVE_THREADSAFE) so a future
+        // non-thread-safe build fails loudly here instead of racing intermittently.
+        unit_assert(mz5::Connection_mz5::isLibraryThreadSafe());
+
         testNonAscendingMzRoundTrip();
         testTranslatingFlagIsInitialized();
         testWriteRead();
@@ -286,6 +375,10 @@ int main(int argc, char* argv[])
         testThreadSafety(4);
         testThreadSafety(8);
         testThreadSafety(16);
+        testConcurrentReadInitRace(2);
+        testConcurrentReadInitRace(4);
+        testConcurrentReadInitRace(8);
+        testConcurrentReadInitRace(16);
 
     }
     catch (exception& e)

@@ -38,6 +38,16 @@ using namespace H5;
 
 namespace {boost::mutex connectionReadMutex_, connectionWriteMutex_;}
 
+bool Connection_mz5::isLibraryThreadSafe()
+{
+    // H5is_library_threadsafe reports the compile-time H5_HAVE_THREADSAFE of the
+    // actually-linked HDF5, so this is a live invariant, not a duplicated constant.
+    hbool_t isThreadSafe = false;
+    if (H5is_library_threadsafe(&isThreadSafe) < 0)
+        return false;
+    return isThreadSafe != 0;
+}
+
 Connection_mz5::Connection_mz5(const std::string filenameIn, const OpenPolicy op,
         const Configuration_mz5 config) :
     config_(config)

@@ -404,7 +404,7 @@ bcp.copy-boost-dependencies copy_boost_subset
     [ path.glob-tree $(PWIZ_SOURCE)/pwiz_tools/common : *.cpp *.hpp ]
     [ path.glob-tree $(LIBRARIES_PATH)/boost_aux : *.cpp *.hpp ]
 
-    $(LIBRARIES_PATH)/hdf5-1.8.7/src/init_once_workaround.cpp
+    # (HDF5 1.14 does its own InitOnce process init: init_once_workaround.cpp dropped -- see libraries/ext-hdf5.jam)
 
   : # requirements
     <location>$(BOOST_SUBSET_PATH)/boost_$(BOOST_VERSION:J=_)
