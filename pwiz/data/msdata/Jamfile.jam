@@ -72,6 +72,11 @@ lib pwiz_data_msdata_core
         <library>/ext/boost//thread
         <library>/ext/zlib//z
         [ mzmlb-build <library>mzmlb//pwiz_data_msdata_mzmlb ]
+        # untrusted-input mzML core parser — extra SDL checks + warnings-as-
+        # errors. Measured under /sdl: exactly one warning (C4389 signed/unsigned mismatch
+        # in MSNumpress.cpp), now fixed, so /WX is enforced on this target's own sources.
+        <toolset>msvc:<cxxflags>/sdl
+        <warnings-as-errors>on
     : # default-build
     : # usage-requirements
         <library>pwiz_data_msdata_version
