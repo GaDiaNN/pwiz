@@ -491,4 +491,97 @@ namespace Test
             }
         }
     }
+
+    /// <summary>
+    /// Regression tests for issue #703 — MSConvertGUI must sanitize the run id (which can be
+    /// attacker-controlled, e.g. a WIFF sample name) before it becomes an output filename, so a
+    /// crafted id cannot traverse out of the chosen output directory or inject path/wildcard
+    /// characters. Exercises Config.outputFilename() directly with an in-memory MSData; requires
+    /// no msconvert.exe and no vendor data, so it runs wherever the MSConvertGUI assembly loads.
+    /// The sanitizer under test is MainLogic.cs Config.outputFilename() (illegalFilename map).
+    /// </summary>
+    [TestClass]
+    public class OutputFilenameSanitizationTest
+    {
+        private static readonly string OutRoot =
+            Path.Combine(Path.GetTempPath(), "msconv_sanitize_test");
+
+        // Build an in-memory MSData whose run id is attacker-controlled (models a WIFF sample
+        // name flowing into the output filename).
+        private static MSData MsDataWithRunId(string runId)
+        {
+            var msd = new MSData();
+            msd.run.id = runId;
+            return msd;
+        }
+
+        // Ids that try to break out of the output directory or inject an absolute/UNC path.
+        private static readonly string[] TraversalPayloads =
+        {
+            @"..\..\..\Windows\System32\evil",
+            "../../../etc/passwd",
+            @"C:\Windows\System32\calc",
+            @"\\server\share\evil",
+            "sub/dir/evil",
+            @"sub\dir\evil",
+        };
+
+        [TestMethod]
+        public void OutputFilename_NeverEscapesOutputDirectory()
+        {
+            var config = new Config(OutRoot) { Extension = ".mzML" };
+            var outRootFull = Path.GetFullPath(OutRoot);
+
+            foreach (var payload in TraversalPayloads)
+            {
+                string result;
+                try
+                {
+                    result = config.outputFilename("input.wiff", MsDataWithRunId(payload));
+                }
+                catch (ArgumentException)
+                {
+                    // Rejecting the id outright also prevents traversal — acceptable defense.
+                    continue;
+                }
+
+                // The produced path must resolve to a file sitting directly in the output dir.
+                var dir = Path.GetFullPath(Path.GetDirectoryName(result) ?? string.Empty);
+                Assert.AreEqual(outRootFull, dir,
+                    "run id escaped the output directory: '" + payload + "' -> '" + result + "'");
+
+                // …and its filename component must carry no directory separators.
+                var name = Path.GetFileName(result);
+                StringAssert.DoesNotMatch(name, new Regex(@"[\\/]"),
+                    "filename retained a separator for id: '" + payload + "'");
+            }
+        }
+
+        [TestMethod]
+        public void OutputFilename_ReplacesIllegalFilenameChars()
+        {
+            var config = new Config(OutRoot) { Extension = ".mzML" };
+            // ':' '\' '/' '*' '?' are all replaced with '_'. These are path-valid characters, so
+            // Path.GetExtension does not throw and the char filter runs deterministically.
+            var result = config.outputFilename("input.wiff", MsDataWithRunId(@"a:b\c/d*e?f"));
+            Assert.AreEqual("a_b_c_d_e_f", Path.GetFileNameWithoutExtension(result));
+        }
+
+        [TestMethod]
+        public void OutputFilename_ReplacesControlCharacters()
+        {
+            var config = new Config(OutRoot) { Extension = ".mzML" };
+            // 0x7f (DEL) is explicitly mapped to '_' by the sanitizer.
+            var result = config.outputFilename("input.wiff", MsDataWithRunId("a\u007fb"));
+            Assert.AreEqual("a_b", Path.GetFileNameWithoutExtension(result));
+        }
+
+        [TestMethod]
+        public void OutputFilename_PreservesBenignRunId()
+        {
+            var config = new Config(OutRoot) { Extension = ".mzML" };
+            var result = config.outputFilename("input.wiff", MsDataWithRunId("Sample_01-run.2"));
+            Assert.AreEqual("Sample_01-run.2.mzML", Path.GetFileName(result));
+        }
+    }
 }
