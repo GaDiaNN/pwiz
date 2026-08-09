@@ -1,0 +1,60 @@
+# Trivy SCA / filesystem scan (complements Dependabot).
+#
+# What this DOES catch: vulnerabilities in manifest-tracked deps (NuGet, etc.),
+# hardcoded secrets, and misconfigurations — uploaded to the Security tab as SARIF.
+#
+# What this does NOT catch: the vendored C libraries shipped as source tarballs under
+# libraries/ (zlib/expat/HDF5/libpng). Trivy fs matches on manifests/
+# lockfiles, not on tarball filenames or embedded version strings. Detecting those
+# needs OWASP Dependency-Check (evidence/CPE-based) — a separate follow-up.
+#
+# Report-only by design: SARIF format => Trivy exits 0, so findings are surfaced in the
+# Security tab without failing the build. Turn it into a gate later once triaged.
+#
+# Runs on the fork (push trigger includes the security branch).
+
+name: "Trivy SCA"
+
+on:
+  push:
+    branches: [ master, "security/**" ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    # Weekly (Mondays 08:00 UTC) so the vuln DB re-checks unchanged code.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: trivy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write   # upload SARIF to code scanning
+
+jobs:
+  scan:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy (fs)
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: false
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-fs
