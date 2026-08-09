@@ -23,11 +23,15 @@
 
 lib pwiz_utility_minimxml
     : # sources
-        XMLWriter.cpp 
-        SAXParser.cpp 
+        XMLWriter.cpp
+        SAXParser.cpp
     : # requirements
         <toolset>msvc,<link>shared:<define>PWIZ_DYN_LINK
         <library>../misc//pwiz_utility_misc
+        # untrusted-input XML parser — extra SDL checks + warnings-as-errors.
+        # Applies only to this target's own sources (XMLWriter.cpp, SAXParser.cpp).
+        <toolset>msvc:<cxxflags>/sdl
+        <warnings-as-errors>on
     : # default-build
     : # usage-requirements
         <library>../misc//pwiz_utility_misc
