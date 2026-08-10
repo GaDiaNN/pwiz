@@ -108,9 +108,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_PROTEOWIZARD;_CRT_SECURE_NO_WARNINGS;_NO_THERMORAW;_NOSQLITE;_LARGEFILE_SOURCE;_FILE_OFFSET_BITS=64;HAVE_MEMMOVE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_PROTEOWIZARD;_CRT_SECURE_NO_WARNINGS;_NO_THERMORAW;_NOSQLITE;_LARGEFILE_SOURCE;_FILE_OFFSET_BITS=64;HAVE_MEMMOVE;_CRT_NONSTDC_NO_DEPRECATE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\..\..\libraries\zlib-1.2.3;..\..\..\..\libraries\expat-2.0.1\lib;$(SolutionDir)MSToolKit\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>ExpatConfig;..\..\..\..\libraries\zlib-1.3.1;..\..\..\..\libraries\expat-2.8.2\lib;$(SolutionDir)MSToolKit\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- /sdl (SDLCheck) elevates a set of warnings to errors, which trips on the newer bundled
+           expat 2.8.2 / zlib 1.3.1 C sources: C4996 (POSIX open/read/write/close in zlib's gz*.c;
+           also see _CRT_NONSTDC_NO_DEPRECATE above) and C4701/C4703 (openEntityList in expat's
+           xmlparse.c). These are vendored third-party sources; suppress just these warnings (the
+           shipping bjam build applies /wd4996 and does not run /sdl over them). SDLCheck stays on. -->
+      <DisableSpecificWarnings>4996;4701;4703;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,9 +129,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_PROTEOWIZARD;_CRT_SECURE_NO_WARNINGS;_NO_THERMORAW;_NOSQLITE;_LARGEFILE_SOURCE;_FILE_OFFSET_BITS=64;HAVE_MEMMOVE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_PROTEOWIZARD;_CRT_SECURE_NO_WARNINGS;_NO_THERMORAW;_NOSQLITE;_LARGEFILE_SOURCE;_FILE_OFFSET_BITS=64;HAVE_MEMMOVE;_CRT_NONSTDC_NO_DEPRECATE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\..\..\libraries\zlib-1.2.3;..\..\..\..\libraries\expat-2.0.1\lib;$(SolutionDir)MSToolKit\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>ExpatConfig;..\..\..\..\libraries\zlib-1.3.1;..\..\..\..\libraries\expat-2.8.2\lib;$(SolutionDir)MSToolKit\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- /sdl (SDLCheck) elevates a set of warnings to errors, which trips on the newer bundled
+           expat 2.8.2 / zlib 1.3.1 C sources: C4996 (POSIX open/read/write/close in zlib's gz*.c;
+           also see _CRT_NONSTDC_NO_DEPRECATE above) and C4701/C4703 (openEntityList in expat's
+           xmlparse.c). These are vendored third-party sources; suppress just these warnings (the
+           shipping bjam build applies /wd4996 and does not run /sdl over them). SDLCheck stays on. -->
+      <DisableSpecificWarnings>4996;4701;4703;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,23 +147,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\adler32.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\compress.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\crc32.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\deflate.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\gzio.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\infback.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\inffast.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\inflate.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\inftrees.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\trees.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\uncompr.c" />
-    <ClCompile Include="..\..\..\..\libraries\zlib-1.2.3\zutil.c" />
-    <ClCompile Include="..\..\..\..\libraries\expat-2.0.1\lib\xmlparse.c" />
-    <ClCompile Include="..\..\..\..\libraries\expat-2.0.1\lib\xmlrole.c" />
-    <ClCompile Include="..\..\..\..\libraries\expat-2.0.1\lib\xmltok.c" />
-    <ClCompile Include="..\..\..\..\libraries\expat-2.0.1\lib\xmltok_impl.c" />
-    <ClCompile Include="..\..\..\..\libraries\expat-2.0.1\lib\xmltok_ns.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\adler32.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\compress.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\crc32.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\deflate.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\gzclose.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\gzlib.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\gzread.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\gzwrite.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\infback.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\inffast.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\inflate.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\inftrees.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\trees.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\uncompr.c" />
+    <ClCompile Include="..\..\..\..\libraries\zlib-1.3.1\zutil.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\xmlparse.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\xmlrole.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\xmltok.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\xmltok_impl.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\xmltok_ns.c" />
+    <ClCompile Include="..\..\..\..\libraries\expat-2.8.2\lib\random_rand_s.c" />
     <ClCompile Include="MSToolKit\src\MSToolkit\MSObject.cpp" />
     <ClCompile Include="MSToolKit\src\MSToolkit\MSReader.cpp" />
     <ClCompile Include="MSToolKit\src\MSToolkit\mzMLWriter.cpp" />
