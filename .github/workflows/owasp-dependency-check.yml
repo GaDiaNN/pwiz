@@ -1,0 +1,58 @@
+# OWASP Dependency-Check (SCA) — evidence/CPE-based scan of the VENDORED C libraries.
+#
+# Complements Dependabot + Trivy (which only see manifests): OWASP DC fingerprints the
+# source tarballs / committed binaries under libraries/ (zlib, expat, HDF5, libpng, ...)
+# against the NVD, catching known-vulnerable *vendored* components those tools miss.
+#
+# Report-only: results are SARIF uploaded to the Security tab; the job does not fail the
+# build (turn `failOnCVSS` into a gate once the first batch is triaged).
+#
+# Requires the repo secret NVD_API_KEY (free from https://nvd.nist.gov/developers/request-an-api-key);
+# without it the NVD data download is heavily rate-limited and may time out.
+
+name: "OWASP Dependency-Check"
+
+on:
+  push:
+    branches: [ master, "security/**" ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 9 * * 1'   # weekly (Mondays 09:00 UTC) so new CVEs catch existing code
+  workflow_dispatch:
+
+concurrency:
+  group: owasp-dc-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  depcheck:
+    name: OWASP Dependency-Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pin to a released tag before relying on this as a gate.
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@3102a65fd5f36d0000297576acc56a475b0de98d # v1.1.0
+        with:
+          project: pwiz
+          # Scan the vendored libraries (tarballs + committed binaries) and NuGet manifests.
+          path: '.'
+          format: 'SARIF'
+          args: >-
+            --scan libraries
+            --enableExperimental
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+
+      - name: Upload results to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ github.workspace }}/reports/dependency-check-report.sarif
+          category: owasp-dc

@@ -1,0 +1,87 @@
+# CodeQL static analysis (SAST) for pwiz.
+#
+# Scope of this workflow (GitHub Actions):
+#   * C++  — builds the pwiz CORE on Ubuntu (mirrors build_and_test.yml) under CodeQL
+#            tracing. Covers the untrusted-input parsers. Does NOT
+#            cover the Windows-only vendor wrappers or C++/CLI bindings.
+#   * C#   — analyzed with build-mode "none" (source-only) so it runs on a Linux runner
+#            without a net472/WinForms build. This is intentionally shallow (no
+#            cross-assembly data flow).
+#
+# The DEEP pass (Windows: vendor wrappers, C++/CLI, full C# Skyline) is the
+# CodeQL CLI recipe (Windows-only) — not runnable on hosted
+# runners. Treat this workflow as continuous baseline coverage.
+#
+# Runs on the fork: the push trigger includes the security branch so a
+# push there starts a scan. Results appear under Security tab -> Code scanning alerts.
+
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ master, "security/**" ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    # Weekly, so newly-published queries catch existing code (Mondays 07:00 UTC).
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+# Cancel a superseded run when new commits land on the same ref.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      security-events: write   # required to upload results
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            os: ubuntu-latest
+            build-mode: none
+          - language: cpp
+            os: ubuntu-latest
+            build-mode: manual
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # Enable extra security queries beyond the default set.
+          queries: security-extended
+
+      # Manual build for C++ (build-mode "none" is not supported for cpp).
+      # Builds only the pwiz core library to keep analysis time reasonable,
+      # mirroring the proven recipe in .github/workflows/build_and_test.yml.
+      - name: Get number of CPU cores
+        if: matrix.language == 'cpp'
+        id: cpu-count
+        uses: SimenB/github-actions-cpu-cores@v1
+
+      - name: Build pwiz core (C++)
+        if: matrix.language == 'cpp'
+        shell: bash
+        run: |
+          gcc --version
+          unset JAVA_HOME
+          ./quickbuild.sh --abbreviate-paths --i-agree-to-the-vendor-licenses \
+            -j${{ steps.cpu-count.outputs.count }} address-model=64 \
+            toolset=gcc pwiz
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

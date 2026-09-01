@@ -1,0 +1,61 @@
+# Dependabot — SCA for manifest-tracked dependencies.
+#
+# Covers ONLY what has a manifest: NuGet packages, GitHub Actions, git submodules.
+# It does NOT see the vendored C libraries committed as tarballs under libraries/
+# (zlib 1.2.3, expat 2.0.1, HDF5 1.8.7, libpng 1.5.6); those are the job
+# of a filesystem scanner (see .github/workflows/trivy.yml, and OWASP Dependency-Check
+# for evidence-based fingerprinting of the tarballs).
+#
+# NOTE: this file only takes effect once it is on the DEFAULT branch of the repo where
+# Dependabot is enabled on the fork. Dependabot version updates run there;
+# Dependabot security alerts additionally require enabling "Dependabot alerts" in the
+# fork's Security settings (a GitHub UI toggle).
+
+version: 2
+
+updates:
+  # Managed NuGet deps: 3 packages.config + ~18 .csproj using PackageReference,
+  # scattered across the tree, so scan recursively with a directory glob.
+  - package-ecosystem: "nuget"
+    directories:
+      - "/**"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+    # Reduce PR noise: batch non-major bumps; majors still get individual PRs.
+    groups:
+      nuget-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Action versions referenced by workflows (e.g. flags outdated actions/checkout@v2).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Submodules: Hardklor, MSToolkit, BullseyeSharp, DocumentConverter.
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "submodule"
+    labels:
+      - "dependencies"
