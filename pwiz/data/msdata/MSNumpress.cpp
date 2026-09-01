@@ -111,7 +111,7 @@ void encodeInt(
         }
         *res_length += 1+8-l;
 
-    } else if (init == mask) {
+    } else if (init == static_cast<unsigned int>(mask)) {
         l = 7;
         for (i=0; i<8; i++) {
             m = mask >> (4*i);

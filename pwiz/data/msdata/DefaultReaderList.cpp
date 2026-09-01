@@ -146,9 +146,9 @@ PWIZ_API_DECL void Reader_mzML::read(const std::string& filename,
     {
         case Type_mzML:
         {
-            Serializer_mzML::Config config;
-            config.indexed = false;
-            Serializer_mzML serializer(config);
+            Serializer_mzML::Config serializerConfig;
+            serializerConfig.indexed = false;
+            Serializer_mzML serializer(serializerConfig);
             serializer.read(is, result);
             break;
         }
@@ -549,9 +549,9 @@ PWIZ_API_DECL void Reader_mzMLb::read(const std::string& filename,
     string rootElement = xml_root_element(*is);
     if (rootElement == "mzML")
     {
-        Serializer_mzML::Config config;
-        config.indexed = false;
-        Serializer_mzML serializer(config);
+        Serializer_mzML::Config serializerConfig;
+        serializerConfig.indexed = false;
+        Serializer_mzML serializer(serializerConfig);
         serializer.read(is, result);
     }
     else if (rootElement == "indexedmzML")
