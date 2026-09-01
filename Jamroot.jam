@@ -380,7 +380,39 @@ project pwiz
         # target Windows 7 or later
         <toolset>msvc:<define>_WIN32_WINNT=_WIN32_WINNT_WIN7
         <toolset>msvc:<define>NTDDI_VERSION=NTDDI_WIN7
-        
+
+        # --- exploit-mitigation / compiler hardening ---
+        # MSVC: buffer-overrun check (/GS, default-on made explicit), Control Flow Guard
+        # (/guard:cf needs both compile and link), and PE flags for ASLR (/DYNAMICBASE,
+        # + 64-bit high-entropy) and DEP (/NXCOMPAT).
+        # NOTE: '/clr' and '/guard:cf' are mutually exclusive (cl error D8016), so /guard:cf
+        # is gated to native TUs only (<using-clr>false, the default). C++/CLI targets
+        # (BinaryData + CLI bindings) set <using-clr>true and are excluded. C files are never
+        # compiled managed, so <cflags>/guard:cf is unconditional. /GS is /clr-compatible.
+        <toolset>msvc:<cflags>/GS
+        <toolset>msvc:<cxxflags>/GS
+        <toolset>msvc:<cflags>/guard:cf
+        <toolset>msvc,<using-clr>false:<cxxflags>/guard:cf
+        <toolset>msvc,<using-clr>false:<linkflags>/guard:cf
+        <toolset>msvc:<linkflags>/DYNAMICBASE
+        <toolset>msvc:<linkflags>/NXCOMPAT
+        <toolset>msvc,<address-model>64:<linkflags>/HIGHENTROPYVA
+        # GCC/Clang (Linux): stack canaries, fortified libc calls (needs optimization,
+        # hence release-only), and full RELRO + immediate binding. PIE is intentionally
+        # NOT forced here — see the has-pie / -no-pie logic below, which pwiz manages.
+        <toolset>gcc:<cflags>-fstack-protector-strong
+        <toolset>gcc:<cxxflags>-fstack-protector-strong
+        <toolset>clang:<cflags>-fstack-protector-strong
+        <toolset>clang:<cxxflags>-fstack-protector-strong
+        <toolset>darwin:<cxxflags>-fstack-protector-strong
+        <toolset>gcc,<variant>release:<define>_FORTIFY_SOURCE=2
+        <toolset>clang,<variant>release:<define>_FORTIFY_SOURCE=2
+        <toolset>gcc:<linkflags>"-Wl,-z,relro"
+        <toolset>gcc:<linkflags>"-Wl,-z,now"
+        <toolset>clang:<linkflags>"-Wl,-z,relro"
+        <toolset>clang:<linkflags>"-Wl,-z,now"
+        # --- end hardening ---
+
         <conditional>@secure-scl-throws
 
         # TODO: figure out a way to only apply this to 3rd party headers
