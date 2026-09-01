@@ -74,7 +74,10 @@
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\compress.c" />
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\crc32.c" />
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\deflate.c" />
-    <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\gzio.c" />
+    <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\gzclose.c" />
+    <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\gzlib.c" />
+    <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\gzread.c" />
+    <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\gzwrite.c" />
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\infback.c" />
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\inffast.c" />
     <ClCompile Include="$(ProjectDir)..\libraries\zlib-x.x.x\inflate.c" />

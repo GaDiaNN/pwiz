@@ -111,7 +111,7 @@ local default_boost_src = "$(libraries_path)/boost_1_86_0" ;
 local boost_src = [ MATCH --boost-src=(.*) : [ modules.peek : ARGV ] ] ;
 boost_src ?= $(default_boost_src) ; # set default path in absence of command-line path
 
-local default_zlib_src = "$(libraries_path)/zlib-1.2.3" ;
+local default_zlib_src = "$(libraries_path)/zlib-1.3.1" ;
 local zlib_src = [ MATCH --zlib-src=(.*) : [ modules.peek : ARGV ] ] ;
 zlib_src ?= $(default_zlib_src) ; # set default path in absence of command-line path
 
@@ -351,7 +351,7 @@ project pwiz
         <toolset>msvc:<cxxflags>/wd4245                 # warning: conversion from 'type1' to 'type2', signed/unsigned mismatch (boost/filesystem/convenience.hpp)
         <toolset>msvc:<cxxflags>/wd4251                 # warning: class needs to have dll-interface to be used by clients of class
         <toolset>msvc:<cxxflags>/wd4267                 # warning: conversion from 'type1' to 'type2', possible loss of data (boost::lexical_cast)
-        <toolset>msvc:<cflags>/wd4244                   # warning: conversion from 'int' to 'unsigned short', possible loss of data (libraries\zlib-1.2.3\inflate.c)
+        <toolset>msvc:<cflags>/wd4244                   # warning: conversion from 'int' to 'unsigned short', possible loss of data (libraries\zlib-1.3.1\inflate.c)
         <toolset>msvc:<cxxflags>/wd4244                 # warning: conversion from 'int' to 'unsigned short', possible loss of data (boost/date_time/microsec_time_clock.hpp)
         <toolset>msvc:<cxxflags>/wd4275                 # warning: non dll-interface class 'base' used as base for dll-interface class 'derived'
         <toolset>msvc:<cxxflags>/wd4702                 # warning: unreachable code (boost::lexical_cast)
@@ -591,16 +591,16 @@ using tar ;
 
 if ! [ without-mz5 ]
 {
-    tar.extract $(PWIZ_LIBRARIES_PATH)/hdf5-1.8.7.tar.bz2 : *.c* *.h* *.jam *.settings : <location>$(PWIZ_LIBRARIES_PATH) ;
+    tar.extract $(PWIZ_LIBRARIES_PATH)/hdf5-1.14.6.tar.bz2 : *.c* *.h* : <location>$(PWIZ_LIBRARIES_PATH) ;
 }
 
 path-constant BOOST_SOURCE : $(boost_src) ;
 path-constant ZLIB_SOURCE : $(zlib_src) ;
 path-constant ZSTD_SOURCE : $(zstd_src) ;
 path-constant GD_SOURCE : $(PWIZ_LIBRARIES_PATH)/libgd-2.1.0alpha ;
-path-constant PNG_SOURCE : $(PWIZ_LIBRARIES_PATH)/libpng-1.5.6 ;
+path-constant PNG_SOURCE : $(PWIZ_LIBRARIES_PATH)/libpng-1.6.58 ;
 path-constant FREETYPE_SOURCE : $(PWIZ_LIBRARIES_PATH)/freetype-VER-2-13-3 ;
-path-constant EXPAT_SOURCE : $(PWIZ_LIBRARIES_PATH)/expat-2.0.1 ;
+path-constant EXPAT_SOURCE : $(PWIZ_LIBRARIES_PATH)/expat-2.8.2 ;
 
 using ext-boost : $(BOOST_VERSION:J=.) : $(BOOST_SOURCE) : <zlib-src-location>$(ZLIB_SOURCE) ;
 using ext-zstd : 1.5.7 : $(ZSTD_SOURCE) ;
@@ -1697,7 +1697,10 @@ bcp.copy-boost-dependencies copy_boost_subset
     [ path.glob-tree $(PWIZ_LIBRARIES_PATH)/boost_aux : *.cpp *.hpp ]
     [ path.glob-tree $(PWIZ_LIBRARIES_PATH)/SQLite : *.cpp *.h ]
 
-    [ mz5-build $(PWIZ_LIBRARIES_PATH)/hdf5-1.8.7/src/init_once_workaround.cpp ]
+    # (HDF5 1.14 is built threadsafe, but its rewritten H5TS does its own InitOnce
+    #  process init in a static lib, so the old init_once_workaround.cpp -- the only
+    #  boost dependency the bundled HDF5 pulled in -- is gone from the 1.14 source and
+    #  is no longer scanned here.)
 
     # scan all targets and their dependencies
     $(PWIZ_ROOT_PATH)/pwiz_tools/commandline//mstools

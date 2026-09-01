@@ -159,7 +159,19 @@
 				>
 			</File>
 			<File
-				RelativePath="$(ProjectDir)..\libraries\zlib-x.x.x\gzio.c"
+				RelativePath="$(ProjectDir)..\libraries\zlib-x.x.x\gzclose.c"
+				>
+			</File>
+			<File
+				RelativePath="$(ProjectDir)..\libraries\zlib-x.x.x\gzlib.c"
+				>
+			</File>
+			<File
+				RelativePath="$(ProjectDir)..\libraries\zlib-x.x.x\gzread.c"
+				>
+			</File>
+			<File
+				RelativePath="$(ProjectDir)..\libraries\zlib-x.x.x\gzwrite.c"
 				>
 			</File>
 			<File

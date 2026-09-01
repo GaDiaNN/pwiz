@@ -64,6 +64,14 @@ public:
     };
 
     /**
+     * Returns true if the bundled HDF5 library was compiled thread-safe
+     * (H5_HAVE_THREADSAFE). mz5 drives HDF5 from multiple worker threads, so a
+     * non-thread-safe build is unsafe; this lets tests assert the invariant
+     * without pulling HDF5 headers into the caller. Wraps H5is_library_threadsafe().
+     */
+    static bool isLibraryThreadSafe();
+
+    /**
      * Default constructor.
      *
      * When opening a file, which is a hdf5 file but no mz5 file, a runtime_error is thrown.

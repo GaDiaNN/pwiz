@@ -44,7 +44,7 @@ obj SchemaUpdater : SchemaUpdater.cpp
                       <library>$(PWIZ_ROOT_PATH)/pwiz/utility/misc//pwiz_utility_misc
                       <address-model>64:<define>IDPICKER_SQLITE_64
                   ;
-using ext-png : 1.5.6 : $(PNG_SOURCE) : <zlib-src-location>$(ZLIB_SOURCE) ;
+using ext-png : 1.6.58 : $(PNG_SOURCE) : <zlib-src-location>$(ZLIB_SOURCE) ;
 
 lib IdpSqlExtensions
     : # sources

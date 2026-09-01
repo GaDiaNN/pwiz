@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "saxhandler.h"
+#include <cctype>
 
 namespace BiblioSpec {
 
@@ -38,6 +39,32 @@ static void endElementCallback(void *data, const XML_Char *el)
 static void charactersCallback(void *data, const XML_Char *s, int len)
 {
     ((SAXHandler*) data)->characters(s, len);
+}
+
+// Back-compat encoding shim. expat >= 2.6 rejects the non-standard label
+// "ASCII" (the registered name is "US-ASCII") that older expat -- and tools such
+// as idPicker -- emit in their XML declaration. Without this, the expat
+// 2.0.1 -> 2.8.2 upgrade would stop BiblioSpec from reading files it read before
+// ("Unknown encoding" error). Map "ASCII" to 7-bit US-ASCII; leave genuinely
+// unknown encodings for expat to reject (XML_STATUS_ERROR).
+static int unknownEncodingCallback(void* /*data*/, const XML_Char* name, XML_Encoding* info)
+{
+    static const char asciiName[] = "ASCII";
+    if (name == NULL)
+        return XML_STATUS_ERROR;
+    size_t i = 0;
+    for (; asciiName[i] != '\0' && name[i] != '\0'; ++i)
+        if (toupper((unsigned char)name[i]) != asciiName[i])
+            return XML_STATUS_ERROR;
+    if (asciiName[i] != '\0' || name[i] != '\0')   // lengths must match exactly
+        return XML_STATUS_ERROR;
+
+    for (int b = 0; b < 128; ++b) info->map[b] = b;      // 7-bit identity
+    for (int b = 128; b < 256; ++b) info->map[b] = -1;   // invalid in US-ASCII
+    info->data = NULL;
+    info->convert = NULL;    // single-byte encoding: map[] is sufficient
+    info->release = NULL;
+    return XML_STATUS_OK;
 }
 
 SAXHandler::SAXHandler()
@@ -59,6 +86,7 @@ void SAXHandler::initParser()
     XML_SetUserData(m_parser_, this);
     XML_SetElementHandler(m_parser_, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(m_parser_, charactersCallback);
+    XML_SetUnknownEncodingHandler(m_parser_, unknownEncodingCallback, NULL);
 }
 
 void SAXHandler::startElement(const XML_Char *el, const XML_Char **attr)

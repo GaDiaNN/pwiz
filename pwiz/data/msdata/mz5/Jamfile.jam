@@ -41,7 +41,7 @@ rule usage-requirements ( properties * )
 }
 
 local hdf5-src-location = [ feature.get-values <hdf5-src-location> : $(options) ] ;
-hdf5-src-location ?= $(PWIZ_LIBRARIES_PATH)/hdf5-1.8.7 ;
+hdf5-src-location ?= $(PWIZ_LIBRARIES_PATH)/hdf5-1.14.6 ;
 path-constant HDF5_SOURCE : $(hdf5-src-location[1]) ;
 using ext-hdf5 : 1.8.7 : $(HDF5_SOURCE) ;
 

@@ -30,9 +30,9 @@ rule init ( version ? : location : options * )
         .initialized = true ;
 
         local zlib-src-location = [ feature.get-values <zlib-src-location> : $(options) ] ;
-        zlib-src-location ?= $(location)/../zlib-1.2.3 ;
+        zlib-src-location ?= $(location)/../zlib-1.3.1 ;
         path-constant ZLIB_SOURCE : $(zlib-src-location[1]) ;
-        using ext-zlib : 1.2.3 : $(ZLIB_SOURCE) ;
+        using ext-zlib : 1.3.1 : $(ZLIB_SOURCE) ;
 
         if [ path.exists $(location).tar.bz2 ]
         {

@@ -60,7 +60,7 @@ local default_boost_src = "$(libraries_path)/boost_$(BOOST_VERSION:J=_)" ;
 local boost_src = [ MATCH --boost-src=(.*) : [ modules.peek : ARGV ] ] ;
 boost_src ?= $(default_boost_src) ; # set default path in absence of command-line path
 
-local default_zlib_src = "$(libraries_path)/zlib-1.2.3" ;
+local default_zlib_src = "$(libraries_path)/zlib-1.3.1" ;
 local zlib_src = [ MATCH --zlib-src=(.*) : [ modules.peek : ARGV ] ] ;
 zlib_src ?= $(default_zlib_src) ; # set default path in absence of command-line path
 
